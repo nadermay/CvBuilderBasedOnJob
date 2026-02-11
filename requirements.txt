@@ -1,0 +1,4 @@
+flask
+pdfplumber
+playwright
+requests

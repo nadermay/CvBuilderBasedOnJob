@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Builder & Job Assistant Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Upload Area -->
+        <div class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">📄</div>
+                <h2>CV Builder AI</h2>
+            </div>
+            
+            <form id="cvForm">
+                <div class="form-group">
+                    <label>Upload Current CV (PDF)</label>
+                    <div class="dropzone" id="dropzone">
+                        <input type="file" id="pdfInput" accept=".pdf" hidden>
+                        <div class="dropzone-content" id="dropzoneContent">
+                            <div class="upload-icon">☁️</div>
+                            <p>Click or Drag PDF here</p>
+                        </div>
+                        <div class="file-info" id="dropzoneFile" style="display:none;">
+                            <span class="file-name" id="fileName">resume.pdf</span>
+                            <span class="remove-file" id="removeFile">×</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Job Description</label>
+                    <textarea id="jobDescription" placeholder="Paste the job description here..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btnGenerate">
+                    <span>⚡ Generate Job Kit</span>
+                    <div class="arrow">→</div>
+                </button>
+            </form>
+
+            <div class="loading-state" id="loadingState" style="display:none;">
+                <div class="loader"></div>
+                <p id="loadingStatus">Analyzing your profile...</p>
+                <div class="steps">
+                    <div class="step" id="step1">Extracting text...</div>
+                    <div class="step" id="step2">Analyzing job requirements...</div>
+                    <div class="step" id="step3">Generating CV + Cover Letter + Gap Analysis...</div>
+                    <div class="step" id="step4">Creating PDF &amp; finalizing...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="top-nav">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="tab-resume">Resume & ATS</button>
+                    <button class="tab-btn" data-tab="tab-cover">Cover Letter</button>
+                    <button class="tab-btn" data-tab="tab-gaps">Gap Analysis</button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div class="welcome-message" id="welcomeMessage">
+                    <h3>Ready to land your dream job?</h3>
+                    <p>Upload your CV and the job description to get started.</p>
+                </div>
+
+                <!-- Success State -->
+                <div class="success-state" id="successState" style="display:none;">
+                    
+                    <!-- Tab 1: Resume & ATS -->
+                    <div class="tab-pane active" id="tab-resume">
+                        <div class="success-header">
+                            <div class="success-icon">✓</div>
+                            <h3>Tailored CV Ready</h3>
+                        </div>
+                        
+                        <!-- ATS Score Gauge -->
+                        <div class="ats-container">
+                            <div class="ats-gauge">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="circle" id="atsCircle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <text x="18" y="20.35" class="percentage" id="atsScore">0%</text>
+                                </svg>
+                                <div class="ats-label">ATS Match Score</div>
+                            </div>
+                            <div class="ats-keywords">
+                                <h4>Missing Keywords</h4>
+                                <div class="tags-container" id="missingKeywords"></div>
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <a href="#" class="btn-download" id="btnDownload">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Download PDF Resume
+                            </a>
+                            <button class="btn-new" id="btnNew">Start Over</button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Cover Letter -->
+                    <div class="tab-pane" id="tab-cover">
+                        <div id="coverInitial">
+                            <p class="tab-intro">Cover letter will be generated with your Job Kit.</p>
+                        </div>
+                        <div id="coverLoading" style="display:none;">
+                            <div class="spinner-small"></div>
+                            <p>Writing cover letter...</p>
+                        </div>
+                        <div id="coverResult" style="display:none;">
+                            <div class="letter-content" id="letterText"></div>
+                            <button class="btn-copy" id="btnCopyCover">Copy to Clipboard</button>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Gap Analysis -->
+                    <div class="tab-pane" id="tab-gaps">
+                        <div id="gapInitial">
+                            <p class="tab-intro">Gap analysis will be generated with your Job Kit.</p>
+                        </div>
+                        <div id="gapLoading" style="display:none;">
+                            <div class="spinner-small"></div>
+                            <p>Analyzing gaps...</p>
+                        </div>
+                        <div id="gapResult" style="display:none;">
+                            <!-- Filled dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div class="error-state" id="errorState" style="display:none;">
+                    <div class="error-icon">!</div>
+                    <h3>Something went wrong</h3>
+                    <p class="error-message" id="errorMessage">Unknown error occurred</p>
+                    <button class="btn-retry" id="btnRetry">Try Again</button>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>CV Builder • Secure Local Processing</p>
+                <p style="margin-top:5px; opacity:0.7; font-size:11px;">Powered by AI Model: <strong>qwen2.5:7b</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Elements ───
+        const form = document.getElementById('cvForm');
+        const dropzone = document.getElementById('dropzone');
+        const pdfInput = document.getElementById('pdfInput');
+        const dropzoneContent = document.getElementById('dropzoneContent');
+        const dropzoneFile = document.getElementById('dropzoneFile');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+        const jobDescription = document.getElementById('jobDescription');
+        const loadingState = document.getElementById('loadingState');
+        const successState = document.getElementById('successState');
+        const errorState = document.getElementById('errorState');
+        const errorMessage = document.getElementById('errorMessage');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const btnDownload = document.getElementById('btnDownload');
+        const btnNew = document.getElementById('btnNew');
+        const btnRetry = document.getElementById('btnRetry');
+        
+        // New Elements
+        const atsScore = document.getElementById('atsScore');
+        const atsCircle = document.getElementById('atsCircle');
+        const missingKeywords = document.getElementById('missingKeywords');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        let currentCvText = "";
+        let currentJobDesc = "";
+
+        // ─── Dropzone ───
+        dropzone.addEventListener('click', () => pdfInput.click());
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                pdfInput.files = e.dataTransfer.files;
+                showFile(e.dataTransfer.files[0]);
+            }
+        });
+        pdfInput.addEventListener('change', () => {
+            if (pdfInput.files.length) {
+                showFile(pdfInput.files[0]);
+            }
+        });
+        removeFile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pdfInput.value = '';
+            dropzoneContent.style.display = 'block';
+            dropzoneFile.style.display = 'none';
+        });
+
+        function showFile(file) {
+            fileName.textContent = file.name;
+            dropzoneContent.style.display = 'none';
+            dropzoneFile.style.display = 'flex';
+        }
+
+        // ─── Tabs ───
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Deactivate all
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanes.forEach(p => p.classList.remove('active'));
+                
+                // Activate clicked
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // ─── Form Submit (Resume + ATS) ───
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!pdfInput.files.length) {
+                alert('Please upload a PDF file');
+                return;
+            }
+            if (!jobDescription.value.trim()) {
+                alert('Please paste the job description');
+                return;
+            }
+
+            // Save for other tabs
+            currentJobDesc = jobDescription.value;
+
+            // Show loading
+            // Hide sidebar form elements not needed? No, keep form but disable?
+            // Just show loading state
+            loadingState.style.display = 'block';
+            welcomeMessage.style.display = 'none';
+            successState.style.display = 'none';
+            errorState.style.display = 'none';
+            
+            // Animate steps
+            animateLoadingSteps();
+
+            const formData = new FormData();
+            formData.append('pdf', pdfInput.files[0]);
+            formData.append('job_description', jobDescription.value);
+
+            try {
+                const response = await fetch('/generate_jobkit', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    loadingState.style.display = 'none';
+                    successState.style.display = 'block';
+                    btnDownload.href = data.download_url;
+                    
+                    // Store CV text for fallback
+                    currentCvText = data.cv_text;
+                    
+                    // Render ATS Score
+                    renderAtsScore(data.ats_score);
+                    
+                    // Auto-populate Cover Letter (from unified response)
+                    if (data.cover_letter && data.cover_letter.body) {
+                        renderCoverLetter(data.cover_letter);
+                    }
+                    
+                    // Auto-populate Gap Analysis (from unified response)
+                    if (data.gap_analysis && data.gap_analysis.match_summary) {
+                        renderGapAnalysis(data.gap_analysis);
+                    }
+                    
+                    // Go to first tab
+                    tabBtns[0].click();
+                    
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (err) {
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+                errorMessage.textContent = err.message;
+            }
+        });
+
+        function renderAtsScore(data) {
+            if (!data) return;
+            const score = data.score || 0;
+            atsScore.textContent = score + "%";
+            
+            // Animate circle - The path has a circumference of exactly 100
+            // So we can just use the score directly for the dasharray
+            
+            // Reset to 0 first for animation effect
+            atsCircle.setAttribute('stroke-dasharray', "0, 100");
+            
+            // Force reflow
+            atsCircle.getBoundingClientRect();
+            
+            // Animate to score
+            requestAnimationFrame(() => {
+                atsCircle.style.transition = "stroke-dasharray 1s ease-in-out";
+                atsCircle.setAttribute('stroke-dasharray', `${score}, 100`);
+            });
+            
+            // Color based on score
+            if (score >= 80) atsCircle.style.stroke = "#22c55e";
+            else if (score >= 60) atsCircle.style.stroke = "#eab308";
+            else atsCircle.style.stroke = "#ef4444";
+            
+            // Missing Keywords
+            missingKeywords.innerHTML = "";
+            if (data.missing && data.missing.length > 0) {
+                data.missing.forEach(word => {
+                    const span = document.createElement("span");
+                    span.className = "tag-missing";
+                    span.textContent = word;
+                    missingKeywords.appendChild(span);
+                });
+            } else {
+                missingKeywords.innerHTML = "<span class='tag-good'>No major missing keywords!</span>";
+            }
+        }
+        
+        function resetTabs() {
+            document.getElementById('coverInitial').style.display = 'block';
+            document.getElementById('coverLoading').style.display = 'none';
+            document.getElementById('coverResult').style.display = 'none';
+            
+            document.getElementById('gapInitial').style.display = 'block';
+            document.getElementById('gapLoading').style.display = 'none';
+            document.getElementById('gapResult').style.display = 'none';
+            
+            tabBtns[0].click();
+        }
+
+        // ─── Render Cover Letter (from unified response) ───
+        function renderCoverLetter(data) {
+            const initial = document.getElementById('coverInitial');
+            const result = document.getElementById('coverResult');
+            const letterText = document.getElementById('letterText');
+            
+            initial.style.display = 'none';
+            result.style.display = 'block';
+            
+            let body = data.body || "";
+            body = body.replace(/\n\n/g, "<br><br>");
+            
+            letterText.innerHTML = `
+                <div class="letter-header">
+                    <strong>Subject:</strong> ${data.subject_line || ''}
+                </div>
+                <div class="letter-body">
+                    ${body}
+                </div>
+                <div class="letter-closing">
+                    Sincerely,<br>
+                    ${data.closing_name || ''}
+                </div>
+            `;
+        }
+
+        // ─── Render Gap Analysis (from unified response) ───
+        function renderGapAnalysis(data) {
+            const initial = document.getElementById('gapInitial');
+            const result = document.getElementById('gapResult');
+            
+            initial.style.display = 'none';
+            result.style.display = 'block';
+            
+            let html = `<div class="gap-summary">${data.match_summary || ''}</div>`;
+            
+            if (data.gaps && data.gaps.length) {
+                html += `<h4>Gaps & Recommendations</h4><div class="gap-list">`;
+                data.gaps.forEach(gap => {
+                    let severityClass = gap.severity === 'critical' ? 'gap-critical' : 'gap-moderate';
+                    html += `
+                        <div class="gap-card ${severityClass}">
+                            <div class="gap-header">
+                                <span class="gap-badge ${gap.severity}">${gap.severity}</span>
+                                <strong>${gap.requirement}</strong>
+                            </div>
+                            <p><strong>Recommendation:</strong> ${gap.recommendation}</p>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            if (data.quick_wins && data.quick_wins.length) {
+                html += `<h4>Quick Wins</h4><ul class="quick-wins">`;
+                data.quick_wins.forEach(win => html += `<li>${win}</li>`);
+                html += `</ul>`;
+            }
+            
+            if (data.interview_tips && data.interview_tips.length) {
+                html += `<h4>Interview Tips</h4><ul class="quick-wins">`;
+                data.interview_tips.forEach(tip => html += `<li>${tip}</li>`);
+                html += `</ul>`;
+            }
+            
+            result.innerHTML = html;
+        }
+
+        // ─── Copy Cover Letter ───
+        document.getElementById('btnCopyCover').addEventListener('click', () => {
+            const text = document.getElementById('letterText').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('btnCopyCover');
+                btn.textContent = "Copied!";
+                setTimeout(() => btn.textContent = "Copy to Clipboard", 2000);
+            });
+        });
+
+        // ─── Loading Animation ───
+        function animateLoadingSteps() {
+            const steps = ['step1', 'step2', 'step3', 'step4'];
+            const delays = [0, 2000, 8000, 30000];
+            const statuses = [
+                'Extracting text from your resume...',
+                'AI is analyzing job requirements...',
+                'Generating your complete Job Kit (CV + Cover Letter + Gap Analysis)...',
+                'Creating professional PDF layout...'
+            ];
+
+            steps.forEach((stepId, i) => {
+                setTimeout(() => {
+                    const el = document.getElementById(stepId);
+                    if (el && loadingState.style.display !== 'none') {
+                        // Mark previous steps as complete
+                        for (let j = 0; j < i; j++) {
+                            document.getElementById(steps[j]).classList.remove('active');
+                            document.getElementById(steps[j]).classList.add('done');
+                        }
+                        el.classList.add('active');
+                        document.getElementById('loadingStatus').textContent = statuses[i];
+                    }
+                }, delays[i]);
+            });
+        }
+
+        // ─── Reset ───
+        function resetForm() {
+            successState.style.display = 'none';
+            // Show welcome message? Or form?
+            // Actually reloading page is easiest or just reset state
+            location.reload(); 
+        }
+
+        btnNew.addEventListener('click', resetForm);
+        btnRetry.addEventListener('click', resetForm);
+    </script>
+</body>
+</html>

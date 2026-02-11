@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.env
+
+# Uploads and output (user-generated content)
+uploads/
+output/
+
+# Personal files
+*.pdf
+*.html
+!templates/*.html
+
+# Test output
+test_output.*
+test_llm_output.json
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Agents
+.agents/
